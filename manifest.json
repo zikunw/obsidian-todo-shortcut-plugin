@@ -1,0 +1,10 @@
+{
+	"id": "todo-shortcut-plugin",
+	"name": "TODO Shortcut",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "This is a sample plugin for Obsidian. This plugin allows easier planning for daily TODOs.",
+	"author": "Zikun Wang",
+	"authorUrl": "https://zikunw.com",
+	"isDesktopOnly": true
+}
