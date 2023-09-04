@@ -38,6 +38,18 @@ export default class MyPlugin extends Plugin {
 			}).open();
 		})
 
+		// status bar
+		const statusBarEl = this.addStatusBarItem();
+		const ratio = await this.getTodayRatio();
+		statusBarEl.createEl('span', {text: `Daily Task: ${ratio}`});
+
+		// refresh status bar every 5 seconds
+		setInterval(async () => {
+			const ratio = await this.getTodayRatio();
+			statusBarEl.empty();
+			statusBarEl.createEl('span', {text: `Daily Task: ${ratio}`});
+		}, 5000);
+
 		// setting
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 	}
@@ -52,6 +64,16 @@ export default class MyPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	getTodayDate(): string {
+		// get today's date
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = today.getMonth() + 1;
+		const day = today.getDate();
+		const dateString = `${year}-${month}-${day}`;
+		return dateString;
 	}
 
 	createTodayTask(): string | null {
@@ -69,12 +91,7 @@ export default class MyPlugin extends Plugin {
 			new Notice(`Task Directory (${this.settings.taskDirectory}) created!`);
 		}
 
-		// get today's date
-		const today = new Date();
-		const year = today.getFullYear();
-		const month = today.getMonth() + 1;
-		const day = today.getDate();
-		const dateString = `${year}-${month}-${day}`;
+		const dateString = this.getTodayDate();
 
 		// check if the file already exists
 		const taskFile = this.app.vault.getAbstractFileByPath(`${this.settings.taskDirectory}/${dateString}.md`);
@@ -98,6 +115,33 @@ export default class MyPlugin extends Plugin {
 		if (taskFile instanceof TFile) {
 			this.app.vault.append(taskFile, task);
 		}
+	}
+
+	async getTodayRatio(): Promise<string> {
+		const taskPath = this.createTodayTask();
+		if (taskPath === null) {
+			return '';
+		}
+		const taskFile = this.app.vault.getAbstractFileByPath(taskPath);
+		if (taskFile instanceof TFile) {
+			const content = await this.app.vault.read(taskFile);
+			const lines = content.split('\n');
+			let total = 0;
+			let completed = 0;
+			for (let line of lines) {
+				if (line.startsWith('- [ ]')) {
+					total += 1;
+				} else if (line.startsWith('- [x]')) {
+					completed += 1;
+					total += 1;
+				}
+			}
+			if (total === 0) {
+				return '0%';
+			}
+			return `${Math.round(completed / total * 100)}%`;
+		}
+		return 'error'
 	}
 }
 
